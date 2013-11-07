@@ -115,45 +115,39 @@ class Test:
             filename = '../xml/' + name + '.csv'
             writecsv = csv.writer(file(filename, 'w'), lineterminator='\n')
            # writecsv.writerow(['src_port', 'src_adrs', 'dst_adrs', 'start_time', 'end_time', 'completion_time'])
-            
             for item in self.__info_box:
                 if item[4] != 0:
                     writecsv.writerow([item[0], item[1], item[2], item[3], item[4], item[4]-item[3]])
                 else:
                     writecsv.writerow([item[0], item[1], item[2], item[3], item[4]])
-                    
+            print 'completion generating : ', filename
             #return self.__stream_index
 
 def main():
-    file2 = 'iperf-he-24-0'
-    file = u'iperf-he-24-0'
+    index = raw_input('input the index of the node ->')
+    file = 'iperf-he-' + index + '-0'
     filename = u'../pcap/'+file+'.pcap'
-    #filename = u'../pcap/01.pcap'
     pcr = dpkt.pcap.Reader(open(filename, 'rb'))
     packet_count = 0
     flow_list = {}
     b=[]
     c=Test()
     for ts,buf in pcr:
-        
         try:
             eth = dpkt.ethernet.Ethernet(buf)
         except:
             print 'Fail parse FrameNo:', packet_count, '. skipped.'
             continue
-        #print packet_count, ' : time : ', ts, 'Length: ', len(buf)
-        #print hex[0:4]
-        #print hex2decima(hex[0:4])
         hex = binascii.hexlify(buf)
         a=c.Pcap_edit(buf, ts, 0)
         a.detect_start()
         a.detect_stream()
         a.detect_fin()
         a.detect_fin_ack()
-        a.xml_gen(file2)
         packet_count += 1
     #print_r(b)
     a.show()
+    a.xml_gen(file)
     for k,v in flow_list.iteritems():
         print k, ':', v, '[Byte]'
 
