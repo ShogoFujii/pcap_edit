@@ -2,3 +2,5 @@
 .pydevproject
 .project
 .pcap
+pcap/
+xml/
