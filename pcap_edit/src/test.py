@@ -84,8 +84,5 @@ for tmp in files:
 print index_list
 """
 __a=[[2,3], [4,5]]
-print __a
-__a=[]
-print __a
-
+print 'as ' + str(len(__a))
 #print index_list

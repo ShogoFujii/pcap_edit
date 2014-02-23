@@ -7,6 +7,7 @@ import binascii
 import ctypes
 import csv
 import os.path
+import sys
 
 #Fix value for judge
 ETH_PROTOCOL_IP = '0021'
@@ -47,7 +48,7 @@ def fild_all_files(directory):
 
 def list_delete(ary, path):
     length=len(path)
-    print ary
+    #print ary
     lists=[]
     for file in ary:
         lists.append(file[length:])
@@ -71,20 +72,35 @@ class Test:
             __stream_index=[]
             __info_box=[]
             __trigger_box=[]
-            self.buf = binascii.hexlify(buf)
-            self.proto=self.buf[0:4]
-            #print "aa : ", self.buf
-            self.src_adr=adrs_convert(self.buf[28:36])
-            #print self.src_adr
-            self.dst_adr=adrs_convert(self.buf[36:44])
-            self.src_port=hex2decima(self.buf[44:48])
-            self.dst_port=hex2decima(self.buf[48:52])
-            self.seq=hex2decima_int(self.buf[52:60])
-            self.ack=hex2decima_int(self.buf[60:68])
-            self.flag=self.buf[68:72]
-            self.ts=ts
-            self.stream_index=stream
-            self.len=len(buf)
+            try:
+                self.buf = binascii.hexlify(buf)
+                self.proto=self.buf[0:4]
+                #print "aa : ", self.buf
+                self.src_adr=adrs_convert(self.buf[28:36])
+                #print self.src_adr
+                self.dst_adr=adrs_convert(self.buf[36:44])
+                self.src_port=hex2decima(self.buf[44:48])
+                self.dst_port=hex2decima(self.buf[48:52])
+                self.seq=hex2decima_int(self.buf[52:60])
+                self.ack=hex2decima_int(self.buf[60:68])
+                self.flag=self.buf[68:72]
+                self.ts=ts
+                self.stream_index=stream
+                self.len=len(buf)
+            except:
+                self.proto=''
+                #print "aa : ", self.buf
+                self.src_adr=''
+                                #print self.src_adr
+                self.dst_adr=''
+                self.src_port=''
+                self.dst_port=''
+                self.seq=''
+                self.ack=''
+                self.flag=''
+                self.ts=0
+                self.stream_index=-1
+                self.len=0
             
         def detect_start(self):
             tmp_box = []
@@ -122,6 +138,7 @@ class Test:
                     tmp_box.append(self.src_port)
                     tmp_box.append(self.dst_port)
                     tmp_box.append(self.seq+1)
+                    tmp_box.append(self.ts)
                         #stream_index.append(self.ts)
             if tmp_box != []:
                 self.__trigger_box.append(tmp_box)
@@ -135,7 +152,7 @@ class Test:
                         for item2 in self.__info_box:
                             if item2[0] == self.dst_port:
                                 item2[3] = find_ary(self.__stream_index, self.dst_port, 0, 2)
-                                item2[5] = self.ts
+                                item2[5] = item[3]
                         self.__trigger_box.remove(item)
 
         def show(self):
@@ -145,6 +162,7 @@ class Test:
             print self.__info_box
             print 'trigger_box'
             print self.__trigger_box
+            print "len : " + str(len(self.__info_box))
             
         def reset(self):
             del self.__stream_index[:]
@@ -165,9 +183,6 @@ class Test:
                 for item in self.__info_box:
                     if item[5] != 0 and item[1].split(".")[2]==index:
                         writecsv.writerow([item[0], item[1], item[2], item[3], item[4], item[5], item[5]-item[4], (item[5]-item[4])*1000])
-                        if item[5]-item[4] < 0:
-                            print item
-                            print self.__info_box
                         self.__info_box.remove(item)
                         
                 csvfile.close()
@@ -180,9 +195,11 @@ class Test:
                         writecsv2.writerow([item[0], item[1], item[2], item[3], item[4], item[5], item[5]-item[4], (item[5]-item[4])*1000])
                 csvfile2.close()
             print 'completion generating : ', filename
+            #print self.__trigger_box
+            
             #return self.__stream_index
 
-def main():
+def main(range_num):
     update = True
     auto_all = True
     if auto_all:
@@ -194,53 +211,61 @@ def main():
         #print index_list
         if update:
             file2 = raw_input('what is the csv name? ->')
-            for i in range(10):
+            for i in range(1000):
                 print 'dir : ', i
                 pre_ins=Test()
-                for index in index_list:
-                    num = int(index)-20
-                    file = 'iperf-he-' + index + '-0'
-                    filename = u'../pcap/'+str(i+1)+'/'+file+'.pcap'
-                    print filename
-                    pcr = dpkt.pcap.Reader(open(filename, 'r+'))
-                    packet_count = 0
-                    for ts,buf in pcr:
-                        pcap_edit=pre_ins.Pcap_edit(buf, ts, 0)
-                        pcap_edit.detect_start()
-                        pcap_edit.detect_stream()
-                        pcap_edit.detect_fin()
-                        pcap_edit.detect_fin_ack()
-                    if update:
-                        pcap_edit.xml_gen(file2, str(num))
-                    else:
-                        pcap_edit.xml_gen(file, str(num))
-                    pcap_edit.reset()
+                index_list2=list(set(index_list))
+                for index in index_list2:
+                    for j in range(range_num):
+                        num = int(index)-20
+                        file = 'iperf-he-' + index + '-' + str(j)
+                        filename = u'../pcap/'+str(i+1)+'/'+file+'.pcap'
+                        print filename
+                        try:
+                            pcr = dpkt.pcap.Reader(open(filename, 'r+'))
+                            packet_count = 0
+                            for ts,buf in pcr:
+                                pcap_edit=pre_ins.Pcap_edit(buf, ts, 0)
+                                pcap_edit.detect_start()
+                                pcap_edit.detect_stream()
+                                pcap_edit.detect_fin()
+                                pcap_edit.detect_fin_ack()
+                            #pcap_edit.show()
+                            if update:
+                                pcap_edit.xml_gen(file2, str(num))
+                            else:
+                                pcap_edit.xml_gen(file, str(num))
+                            #pcap_edit.show()
+                            pcap_edit.reset()
+                        except:
+                            print 'hitt'
                     
         else:
-            index = raw_input('input the index of the node ->')
-            num = int(index)-20
-            file = 'iperf-he-' + index + '-0'
-            if update:
-                file2 = raw_input('what is the csv name? ->')
-            filename = u'../pcap/'+file+'.pcap'
-            
-            pcr = dpkt.pcap.Reader(open(filename, 'r'))
-            packet_count = 0
-            pre_ins=Test()
-            for ts,buf in pcr:
-                pcap_edit=pre_ins.Pcap_edit(buf, ts, 0)
-                pcap_edit.detect_start()
-                pcap_edit.detect_stream()
-                pcap_edit.detect_fin()
-                pcap_edit.detect_fin_ack()
-                packet_count += 1
-            #print_r(b)
-            #if(num == 12):
-                #pcap_edit.show()
-            if update:
-                pcap_edit.xml_gen(file2, str(num))
-            else:
-                pcap_edit.xml_gen(file, str(num))
+            for j in range(3):
+                index = raw_input('input the index of the node ->')
+                num = int(index)-20
+                file = 'iperf-he-' + index + '-' + str(j)
+                if update:
+                    file2 = raw_input('what is the csv name? ->')
+                filename = u'../pcap/'+file+'.pcap'
+                
+                pcr = dpkt.pcap.Reader(open(filename, 'r'))
+                packet_count = 0
+                pre_ins=Test()
+                for ts,buf in pcr:
+                    pcap_edit=pre_ins.Pcap_edit(buf, ts, 0)
+                    pcap_edit.detect_start()
+                    pcap_edit.detect_stream()
+                    pcap_edit.detect_fin()
+                    pcap_edit.detect_fin_ack()
+                    packet_count += 1
+                #print_r(b)
+                #if(num == 12):
+                    #pcap_edit.show()
+                if update:
+                    pcap_edit.xml_gen(file2, str(num))
+                else:
+                    pcap_edit.xml_gen(file, str(num))
     """
     index = raw_input('input the index of the node ->')
     num = int(index)-20
@@ -268,4 +293,5 @@ def main():
         """
 
 if __name__ == '__main__':
-    main()
+    param = sys.argv
+    main(int(param[1]))
