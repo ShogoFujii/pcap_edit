@@ -48,7 +48,7 @@ def fild_all_files(directory):
 
 def list_delete(ary, path):
     length=len(path)
-    #print ary
+    print ary
     lists=[]
     for file in ary:
         lists.append(file[length:])
@@ -106,6 +106,7 @@ class Test:
             tmp_box = []
             if self.proto == ETH_PROTOCOL_IP: #IP PROTOCOL
                 if self.flag == ETH_FLAG_START:
+                    #print self.ts
                     tmp_box.append(self.src_port)
                     tmp_box.append(self.src_adr)
                     tmp_box.append(self.dst_adr)
@@ -138,7 +139,6 @@ class Test:
                     tmp_box.append(self.src_port)
                     tmp_box.append(self.dst_port)
                     tmp_box.append(self.seq+1)
-                    tmp_box.append(self.ts)
                         #stream_index.append(self.ts)
             if tmp_box != []:
                 self.__trigger_box.append(tmp_box)
@@ -152,7 +152,7 @@ class Test:
                         for item2 in self.__info_box:
                             if item2[0] == self.dst_port:
                                 item2[3] = find_ary(self.__stream_index, self.dst_port, 0, 2)
-                                item2[5] = item[3]
+                                item2[5] = self.ts
                         self.__trigger_box.remove(item)
 
         def show(self):
@@ -183,6 +183,9 @@ class Test:
                 for item in self.__info_box:
                     if item[5] != 0 and item[1].split(".")[2]==index:
                         writecsv.writerow([item[0], item[1], item[2], item[3], item[4], item[5], item[5]-item[4], (item[5]-item[4])*1000])
+                        if item[5]-item[4] < 0:
+                            #print item
+                            print self.__info_box
                         self.__info_box.remove(item)
                         
                 csvfile.close()
@@ -211,10 +214,11 @@ def main(range_num):
         #print index_list
         if update:
             file2 = raw_input('what is the csv name? ->')
-            for i in range(1000):
+            for i in range(1):
                 print 'dir : ', i
                 pre_ins=Test()
                 index_list2=list(set(index_list))
+                #print index_list2
                 for index in index_list2:
                     for j in range(range_num):
                         num = int(index)-20
