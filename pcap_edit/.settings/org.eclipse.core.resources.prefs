@@ -1,2 +1,7 @@
 eclipse.preferences.version=1
+encoding//src/file_delete.py=utf-8
+encoding//src/file_delete_size.py=utf-8
 encoding//src/pcap_edit.py=utf-8
+encoding//src/pcap_edit_back.py=utf-8
+encoding//src/pcap_edit_back2.py=utf-8
+encoding//src/test.py=utf-8

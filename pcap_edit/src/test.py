@@ -35,7 +35,6 @@ def fild_all_files(directory):
 
 def list_delete(ary, path):
     length=len(path)
-    print ary
     lists=[]
     for file in ary:
         lists.append(file[length:])
@@ -83,6 +82,10 @@ for tmp in files:
         index_list.append(tmp.split('-')[2])
 print index_list
 """
-__a=[[2,3], [4,5]]
-print 'as ' + str(len(__a))
+__a=[['53578', '10.1.1.2', '10.1.3.2', 75442, 1.79, 1.928468], ['53579', '10.1.1.2', '10.1.3.2', 75442, 1.889999, 2.052518], ['53580', '10.1.1.2', '10.1.3.2', 75442, 1.949999, 2.092468], ['53581', '10.1.1.2', '10.1.3.2', 75442, 2.3799989999999998, 2.520468], ['53582', '10.1.1.2', '10.1.3.2', 75442, 2.839999, 3.00851], ['53583', '10.1.1.2', '10.1.3.2', 0, 2.862774, 0], ['53584', '10.1.1.2', '10.1.3.2', 0, 2.94463, 0]]
+
+
+for item in __a:
+    print item
+#print 'as ' + str(len(__a))
 #print index_list

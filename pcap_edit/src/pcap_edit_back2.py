@@ -12,7 +12,10 @@ import sys
 #Fix value for judge
 ETH_PROTOCOL_IP = '0021'
 ETH_FLAG_START = 'd002'
+ETH_FLAG_START2 = 'a002'
+ETH_FLAG_START_ACK = 'a012'
 ETH_FLAG_FIN = 'a011'
+ETH_FLAG_FIN2 = '8019'
 
 def hex2decima_int(string):
     return int(string, 16)
@@ -83,6 +86,7 @@ class Test:
                 self.dst_port=hex2decima(self.buf[48:52])
                 self.seq=hex2decima_int(self.buf[52:60])
                 self.ack=hex2decima_int(self.buf[60:68])
+                #print 'self.ack : ', self.buf[60:68]
                 self.flag=self.buf[68:72]
                 self.ts=ts
                 self.stream_index=stream
@@ -105,7 +109,7 @@ class Test:
         def detect_start(self):
             tmp_box = []
             if self.proto == ETH_PROTOCOL_IP: #IP PROTOCOL
-                if self.flag == ETH_FLAG_START:
+                if self.flag == ETH_FLAG_START or self.flag == ETH_FLAG_START2 :
                     #print self.ts
                     tmp_box.append(self.src_port)
                     tmp_box.append(self.src_adr)
@@ -113,12 +117,14 @@ class Test:
                     tmp_box.append(0)
                     tmp_box.append(self.ts)
                     tmp_box.append(0)
+                    #tmp_box.append(self.ack)
             #print tmp_box
             if tmp_box != []:
                 self.__info_box.append(tmp_box)
             #return tmp_box
         def detect_stream(self):
             tmp_box = []
+            #print 'ack : ', self.ack
             for num in self.__stream_index:
                 if num[0] == self.src_port and num[1] == self.dst_port:
                     num[2] += self.len
@@ -129,22 +135,33 @@ class Test:
             tmp_box.append(self.src_port)
             tmp_box.append(self.dst_port)
             tmp_box.append(0)
+            tmp_box.append(0)
+            tmp_box.append(0)
             self.__stream_index.append(tmp_box)
+                   
+        def detect_start_ack(self):
+            for num in self.__stream_index:
+                if self.flag == ETH_FLAG_START_ACK:
+                    if num[1] == self.src_port and num[0] == self.dst_port:
+                        num[3] = self.ack-1
+                        num[4] = self.seq
+                        return False
             
         def detect_fin(self):
             #print 'flag : ', self.flag
             tmp_box = []
             if self.proto == ETH_PROTOCOL_IP: #IP PROTOCOL
-                if self.flag == ETH_FLAG_FIN:
+                if self.flag == ETH_FLAG_FIN or self.flag == ETH_FLAG_FIN2:
                     tmp_box.append(self.src_port)
-                    tmp_box.append(self.dst_port)
+                    tmp_box.append(self.dst_port)        
                     tmp_box.append(self.seq+1)
+                    #print 'aaa : ', self.seq
                         #stream_index.append(self.ts)
             if tmp_box != []:
                 self.__trigger_box.append(tmp_box)
         
         def detect_fin_ack(self):
-            if self.__trigger_box ==[] or self.__trigger_box ==[]:
+            if self.__trigger_box ==[]:
                 return False
             else:
                 for item in self.__trigger_box:
@@ -180,14 +197,14 @@ class Test:
                     temp.append(word)
                 writecsv = csv.writer(csvfile, lineterminator='\n')
                 #writecsv.writerow(['2004as5f', 'testetst'])
+                print self.__info_box
+                print "len : " + str(len(self.__info_box))
+                testa=0
                 for item in self.__info_box:
+                    #print item
                     if item[5] != 0 and item[1].split(".")[2]==index:
                         writecsv.writerow([item[0], item[1], item[2], item[3], item[4], item[5], item[5]-item[4], (item[5]-item[4])*1000])
-                        if item[5]-item[4] < 0:
-                            #print item
-                            print self.__info_box
-                        self.__info_box.remove(item)
-                        
+                        #self.__info_box.remove(item)
                 csvfile.close()
             else:
                 csvfile2 = file(filename, 'w')
@@ -214,14 +231,15 @@ def main(range_num):
         #print index_list
         if update:
             file2 = raw_input('what is the csv name? ->')
-            for i in range(1):
+            for i in range(10):
                 print 'dir : ', i
                 pre_ins=Test()
                 index_list2=list(set(index_list))
                 #print index_list2
                 for index in index_list2:
                     for j in range(range_num):
-                        num = int(index)-20
+                        num = int(index) -20
+                        print 'num : ', num
                         file = 'iperf-he-' + index + '-' + str(j)
                         filename = u'../pcap/'+str(i+1)+'/'+file+'.pcap'
                         print filename
@@ -232,6 +250,7 @@ def main(range_num):
                                 pcap_edit=pre_ins.Pcap_edit(buf, ts, 0)
                                 pcap_edit.detect_start()
                                 pcap_edit.detect_stream()
+                                pcap_edit.detect_start_ack()
                                 pcap_edit.detect_fin()
                                 pcap_edit.detect_fin_ack()
                             #pcap_edit.show()
@@ -260,6 +279,7 @@ def main(range_num):
                     pcap_edit=pre_ins.Pcap_edit(buf, ts, 0)
                     pcap_edit.detect_start()
                     pcap_edit.detect_stream()
+                    pcap_edit.detect_start_ack()
                     pcap_edit.detect_fin()
                     pcap_edit.detect_fin_ack()
                     packet_count += 1
