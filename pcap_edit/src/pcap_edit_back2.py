@@ -332,17 +332,24 @@ class Test:
                 #print self.__info_box
                 #print "len : " + str(len(self.__info_box))
                 testa=0
+                print len(self.__info_box)
                 for item in self.__info_box:
-                    #print item
+                    #print self.__info_box
+                    print item
+                    #print 'item :: ',item[5], 'index:',item[1].split(".")[2],'/',index
                     if item[5] != 0 and item[1].split(".")[2]==index:
+                        print 'ok'
                         path_index = int(item[2].split(".")[1])-1
                         ts1=int(math.floor(item[4]*10)/10/0.5)
                         ts2=int(math.floor(item[5]*10)/10/0.5)
                         list_ts = range(ts1, ts2+1)
                         total_thr = 0
-                        for var in list_ts:
-                            total_thr += self.__thr_put_box[int(dir_num)][path_index][var]
-                        total_thr = total_thr /(0.5 * len(list_ts))
+                        try:
+                            for var in list_ts:
+                                total_thr += self.__thr_put_box[int(dir_num)][path_index][var]
+                            total_thr = total_thr /(0.5 * len(list_ts))
+                        except:
+                            total_thr=0
                         writecsv.writerow([item[0], item[1], item[2], item[3], item[4], item[5], item[5]-item[4], (item[5]-item[4])*1000, total_thr*8 /0.5 /1024 /1024])
                         #self.__info_box.remove(item)
                 csvfile.close()
@@ -357,9 +364,12 @@ class Test:
                         ts2=int(math.floor(item[5]*10)/10/0.5)
                         list_ts = range(ts1, ts2+1)
                         total_thr = 0
-                        for var in list_ts:
-                            total_thr += self.__thr_put_box[int(dir_num)][path_index][var]
-                        total_thr = total_thr /(0.5 * len(list_ts))
+                        try:
+                            for var in list_ts:
+                                total_thr += self.__thr_put_box[int(dir_num)][path_index][var]
+                            total_thr = total_thr /(0.5 * len(list_ts))
+                        except:
+                            total_thr=0
                         writecsv2.writerow([item[0], item[1], item[2], item[3], item[4], item[5], item[5]-item[4], (item[5]-item[4])*1000, total_thr*8 /0.5 /1024 /1024])
                 csvfile2.close()
             print 'completion generating : ', filename
@@ -390,7 +400,7 @@ def main(range_num):
             print "--Reading data_set....."
             for filename in tmp_ary:
                 node = filename.split("-")[2]
-                #print node
+                print 'node ::',node
                 if node == index:
                     #print filename
                     pcr = dpkt.pcap.Reader(open(filename, 'r+'))
@@ -398,7 +408,7 @@ def main(range_num):
                         count+=1
                         pcap_edit=pre_ins.Pcap_edit(buf, ts, 0)
                         pcap_edit.detect_adrs2(filename, 0.0, 4.0, 0.5)
-            for i in range(1000):
+            for i in range(10):
                 print 'dir : ', i
                 #pre_ins=Test()
                 
@@ -433,7 +443,7 @@ def main(range_num):
                             pcap_edit.reset()
                         except:
                             print 'hitt'
-            pcap_edit.show2()
+            #pcap_edit.show()
                     
         else:
             for j in range(10):
